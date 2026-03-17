@@ -1,0 +1,4 @@
+[
+  { "name": "CVS Pharmacy", "address": "123 Main St", "zip": "74104", "identifier": "CVS001", "phone_number": "555-111-2222", "supports_e_rx": true },
+  { "name": "Walgreens", "address": "456 Elm St", "zip": "74104", "identifier": "WAL001", "phone_number": "555-333-4444", "supports_e_rx": true }
+]

@@ -1,0 +1,24 @@
+<h1>Search Pharmacies</h1>
+<input type="text" id="zip" placeholder="Enter ZIP">
+<input type="number" id="radius" placeholder="Radius in km" value="5">
+<button onclick="searchPharmacies()">Search</button>
+
+<ul id="results"></ul>
+
+<script>
+  async function searchPharmacies() {
+    const zip = document.getElementById('zip').value;
+    const radius = document.getElementById('radius').value;
+    const res = await fetch(`/api/pharmacies?zip=${zip}&radius=${radius}`);
+    const pharmacies = await res.json();
+
+    const ul = document.getElementById('results');
+    ul.innerHTML = '';
+
+    pharmacies.forEach(p => {
+      const li = document.createElement('li');
+      li.innerText = `ID: ${p.id} | Name: ${p.name} | Address: ${p.address}`;
+      ul.appendChild(li);
+    });
+  }
+</script>
