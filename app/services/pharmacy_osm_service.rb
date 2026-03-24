@@ -48,7 +48,8 @@ class PharmacyOsmService
       lat: el["lat"],
       lon: el["lon"],
       address: el["tags"]["addr:street"] || el["tags"]["addr:full"],
-      phone: el["tags"]["phone"] || el["tags"]["contact:phone"] || "No phone number"
+      phone: el["tags"]["phone"] || el["tags"]["contact:phone"] || "No phone number",
+      supports_e_rx: ["Yes", "No"].sample   # dummy value
     }
 end
   end
