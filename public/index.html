@@ -14,6 +14,7 @@
   <label>Patient ID: <input type="text" id="patientId" required></label><br>
   <label>Provider ID: <input type="text" id="providerId" required></label><br>
   <button type="submit">Send Prescription</button>
+  <p id="loading" style="display:none;">Loading pharmacies...</p>
 </form>
 
 <script>
@@ -23,37 +24,48 @@ let selectedPharmacyId = null;
 async function searchPharmacies() {
   const zip = document.getElementById('zip').value;
   const radius = document.getElementById('radius').value;
-  const res = await fetch(`/api/pharmacies?zip=${zip}&radius=${radius}`);
-  const pharmacies = await res.json();
 
   const ul = document.getElementById('results');
+  const loading = document.getElementById('loading');
+
+  // Show loading
+  loading.style.display = 'block';
   ul.innerHTML = '';
 
-  pharmacies.forEach(p => {
-    const li = document.createElement('li');
+  try {
+    const res = await fetch(`/api/pharmacies?zip=${zip}&radius=${radius}`);
+    const pharmacies = await res.json();
 
-    // Create radio button safely
-    const radio = document.createElement('input');
-    radio.type = 'radio';
-    radio.name = 'selectedPharmacy';
-    radio.value = p.id;
-    radio.addEventListener('click', () => selectPharmacy(p.id));
+    pharmacies.forEach(p => {
+      const li = document.createElement('li');
 
-    // Create the pharmacy info text
-    const info = document.createElement('span');
-    info.innerHTML = `
-      <strong>ID:</strong> ${p.id} |
-      <strong>Name:</strong> ${p.name} |
-      <strong>Address:</strong> ${p.address} |
-      <strong>Contact:</strong> ${p.phone} |
-      <strong>e-Prescriptions:</strong> ${p.supports_e_rx}
-    `;
+      const radio = document.createElement('input');
+      radio.type = 'radio';
+      radio.name = 'selectedPharmacy';
+      radio.value = p.id;
+      radio.addEventListener('click', () => selectPharmacy(p.id));
 
-    // Append radio button and info to list item
-    li.appendChild(radio);
-    li.appendChild(info);
-    ul.appendChild(li);
-  });
+      const info = document.createElement('span');
+      info.innerHTML = `
+        <strong>ID:</strong> ${p.id} |
+        <strong>Name:</strong> ${p.name} |
+        <strong>Address:</strong> ${p.address} |
+        <strong>Contact:</strong> ${p.phone || "No phone number"} |
+        <strong>e-Prescriptions:</strong> ${p.supports_e_rx}
+      `;
+
+      li.appendChild(radio);
+      li.appendChild(info);
+      ul.appendChild(li);
+    });
+
+  } catch (error) {
+    console.error(error);
+    ul.innerHTML = '<li>Error loading pharmacies</li>';
+  } finally {
+    // Hide loading
+    loading.style.display = 'none';
+  }
 }
 
 // Set selected pharmacy ID
