@@ -47,7 +47,8 @@ class PharmacyOsmService
       name: el["tags"]["name"] || "Unknown Pharmacy",
       lat: el["lat"],
       lon: el["lon"],
-      address: el["tags"]["addr:street"] || el["tags"]["addr:full"]
+      address: el["tags"]["addr:street"] || el["tags"]["addr:full"],
+      phone: el["tags"]["phone"] || el["tags"]["contact:phone"] || "No phone number"
     }
 end
   end

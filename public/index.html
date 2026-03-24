@@ -17,7 +17,7 @@
 
     pharmacies.forEach(p => {
       const li = document.createElement('li');
-      li.innerText = `ID: ${p.id} | Name: ${p.name} | Address: ${p.address}`;
+      li.innerText = `ID: ${p.id} | Name: ${p.name} | Address: ${p.address} | Contact: ${p.phone} `;
       ul.appendChild(li);
     });
   }
