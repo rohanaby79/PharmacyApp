@@ -27,30 +27,45 @@ class PharmacyOsmService
   end
 
   def pharmacies_near(lat, lon, radius_km)
-    radius_m = (radius_km * 1000).to_i
-    query = <<~OVERPASS
-      [out:json];
-      node
-        ["amenity"="pharmacy"]
-        (around:#{radius_m},#{lat},#{lon});
-      out;
-    OVERPASS
+  radius_m = (radius_km * 1000).to_i
+  query = <<~OVERPASS
+    [out:json];
+    node
+      ["amenity"="pharmacy"]
+      (around:#{radius_m},#{lat},#{lon});
+    out;
+  OVERPASS
 
-    url = URI("https://overpass-api.de/api/interpreter")
-    res = Net::HTTP.post(url, query)
-    data = JSON.parse(res.body)
-    data["elements"]
-  .select { |el| el["tags"]["addr:street"].present? || el["tags"]["addr:full"].present? }
-  .map do |el|
-    {
-      id: el["id"],  # unique identifier
-      name: el["tags"]["name"] || "Unknown Pharmacy",
-      lat: el["lat"],
-      lon: el["lon"],
-      address: el["tags"]["addr:street"] || el["tags"]["addr:full"],
-      phone: el["tags"]["phone"] || el["tags"]["contact:phone"] || "No phone number",
-      supports_e_rx: ["Yes", "No"].sample   # dummy value
-    }
-end
+  url = URI("https://overpass-api.de/api/interpreter")
+
+  # Build HTTP POST request with proper headers
+  req = Net::HTTP::Post.new(url)
+  req.body = query
+  req["Content-Type"] = "text/plain"
+  req["User-Agent"] = "YourAppName - Rails Demo"  # Overpass requires User-Agent
+
+  res = Net::HTTP.start(url.hostname, url.port, use_ssl: true) { |http| http.request(req) }
+
+  # Check for HTTP errors
+  unless res.is_a?(Net::HTTPSuccess)
+    Rails.logger.error("Overpass API error: #{res.code} #{res.body}")
+    return []
   end
+
+  # Parse JSON safely
+  data = JSON.parse(res.body)
+  data["elements"]
+    .select { |el| el["tags"]["addr:street"].present? || el["tags"]["addr:full"].present? }
+    .map do |el|
+      {
+        id: el["id"],
+        name: el["tags"]["name"] || "Unknown Pharmacy",
+        lat: el["lat"],
+        lon: el["lon"],
+        address: el["tags"]["addr:street"] || el["tags"]["addr:full"],
+        phone: el["tags"]["phone"] || el["tags"]["contact:phone"] || "No phone number",
+        supports_e_rx: ["Yes", "No"].sample
+      }
+    end
+end
 end
