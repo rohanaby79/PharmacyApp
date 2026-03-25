@@ -6,9 +6,7 @@ require "action_view/railtie"
 require "action_mailer/railtie"
 require "active_job/railtie"
 require "action_cable/engine"
-
-# ❌ DO NOT include this:
-# require "active_record/railtie"
+require "active_record/railtie"
 
 Bundler.require(*Rails.groups)
 
