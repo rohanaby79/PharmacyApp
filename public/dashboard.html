@@ -322,3 +322,161 @@
   </script>
 </body>
 </html>
+    <!-- Story 6: Add Medication Instructions -->
+    <div class="card">
+      <h2>&#128138; Add Medication Instructions</h2>
+      <div class="story-label">Story 6 — Add dosage instructions to an existing prescription</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Prescription ID</label>
+          <input type="number" id="instr-rx-id" placeholder="e.g. 1" value="1"/>
+        </div>
+        <div class="form-group">
+          <label>Medication</label>
+          <input type="text" id="instr-medication" placeholder="e.g. Amoxicillin"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Dosage</label>
+          <input type="text" id="instr-dosage" placeholder="e.g. 500mg"/>
+        </div>
+        <div class="form-group">
+          <label>Frequency</label>
+          <input type="text" id="instr-frequency" placeholder="e.g. Twice daily"/>
+        </div>
+        <div class="form-group">
+          <label>Duration</label>
+          <input type="text" id="instr-duration" placeholder="e.g. 7 days"/>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:15px">
+        <label>Additional Notes (optional)</label>
+        <textarea id="instr-notes" placeholder="e.g. Take with food"></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="addInstructions()">Save Instructions</button>
+      <div class="result" id="instr-result"></div>
+    </div>
+
+    <!-- Story 16: Print Prescription -->
+    <div class="card">
+      <h2>&#128438; Print Prescription</h2>
+      <div class="story-label">Story 16 — Generate a printable prescription document</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Prescription ID</label>
+          <input type="number" id="print-rx-id" placeholder="e.g. 1" value="1"/>
+        </div>
+      </div>
+      <button class="btn btn-green" onclick="printPrescription()">&#128438; Open Print View</button>
+      <div class="result" id="print-result"></div>
+    </div>
+
+    <!-- Story 19: Prescription History -->
+    <div class="card">
+      <h2>&#128203; Prescription History</h2>
+      <div class="story-label">Story 19 — View all prescriptions you have created</div>
+      <button class="btn btn-primary" onclick="loadHistory()">Load History</button>
+      <div style="margin-top:15px; overflow-x:auto;">
+        <table id="history-table" style="display:none">
+          <thead>
+            <tr>
+              <th>Prescription ID</th>
+              <th>Medication</th>
+              <th>Dosage</th>
+              <th>Frequency</th>
+              <th>Duration</th>
+              <th>Date</th>
+              <th>Print</th>
+            </tr>
+          </thead>
+          <tbody id="history-body"></tbody>
+        </table>
+        <div class="result" id="history-result"></div>
+      </div>
+    </div>
+
+    <script>
+    async function addInstructions() {
+      const rxId = document.getElementById('instr-rx-id').value;
+      const res = await fetch(`/prescriptions/${rxId}/instructions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': token },
+        body: JSON.stringify({
+          medication: document.getElementById('instr-medication').value,
+          dosage:     document.getElementById('instr-dosage').value,
+          frequency:  document.getElementById('instr-frequency').value,
+          duration:   document.getElementById('instr-duration').value,
+          notes:      document.getElementById('instr-notes').value
+        })
+      });
+      const data = await res.json();
+      const el = document.getElementById('instr-result');
+      el.style.display = 'block';
+      el.className = 'result ' + (res.ok ? 'success' : 'error');
+      el.textContent = res.ok ? 'Instructions saved for Prescription #' + rxId : JSON.stringify(data, null, 2);
+    }
+
+    async function printPrescription() {
+      const rxId = document.getElementById('print-rx-id').value;
+      const el = document.getElementById('print-result');
+      const res = await fetch(`/prescriptions/${rxId}/print`, {
+        headers: { 'Authorization': token }
+      });
+      el.style.display = 'block';
+      if (res.ok) {
+        const html = await res.text();
+        const win = window.open('', '_blank');
+        win.document.write(html);
+        win.document.close();
+        el.className = 'result success';
+        el.textContent = 'Print view opened in new tab.';
+      } else {
+        el.className = 'result error';
+        el.textContent = 'No instructions found for Prescription #' + rxId + '. Add instructions first.';
+      }
+    }
+
+    async function loadHistory() {
+      const res = await fetch('/prescriptions/history', {
+        headers: { 'Authorization': token }
+      });
+      const data = await res.json();
+      const el = document.getElementById('history-result');
+      if (res.ok && data.length > 0) {
+        const tbody = document.getElementById('history-body');
+        tbody.innerHTML = '';
+        data.forEach(rx => {
+          tbody.innerHTML += `<tr>
+            <td>${rx.prescription_id}</td>
+            <td>${rx.medication}</td>
+            <td>${rx.dosage}</td>
+            <td>${rx.frequency}</td>
+            <td>${rx.duration}</td>
+            <td>${new Date(rx.created_at).toLocaleDateString()}</td>
+            <td><button onclick="openPrint(${rx.prescription_id})" style="background:#2c5f8a;color:white;border:none;padding:4px 10px;border-radius:5px;cursor:pointer;font-size:12px;">Print</button></td>
+          </tr>`;
+        });
+        document.getElementById('history-table').style.display = 'table';
+        el.style.display = 'none';
+      } else {
+        el.style.display = 'block';
+        el.className = 'result';
+        el.textContent = 'No prescriptions found. Add instructions first.';
+      }
+    }
+
+    async function openPrint(rxId) {
+      const res = await fetch(`/prescriptions/${rxId}/print`, {
+        headers: { 'Authorization': token }
+      });
+      if (res.ok) {
+        const html = await res.text();
+        const win = window.open('', '_blank');
+        win.document.write(html);
+        win.document.close();
+      } else {
+        alert('Could not load print view for prescription #' + rxId);
+      }
+    }
+    </script>
