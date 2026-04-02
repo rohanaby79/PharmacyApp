@@ -61,7 +61,7 @@ module Api
 
     def prescription_params
       params.permit(:pharmacy_id, :medication, :dosage, :frequency,
-                    :quantity, :patient_id, :provider_id, :dea_schedule)
+                    :quantity, :patient_id, :provider_id, :dea_schedule, :dea_number)
     end
   end
 end

@@ -94,7 +94,7 @@
 <input type="text" id="zip" placeholder="Enter ZIP">
 <input type="number" id="radius" placeholder="Radius in km" value="5">
 <button onclick="searchPharmacies()">Search</button>
-
+<p id="loading" style="display:none;">Loading pharmacies...</p>
 <ul id="results"></ul>
 
 <h2>Create Electronic Prescription</h2>
@@ -105,8 +105,19 @@
   <label>Quantity: <input type="number" id="quantity" required></label>
   <label>Patient ID: <input type="text" id="patientId" required></label>
   <label>Provider ID: <input type="text" id="providerId" required></label>
+  <label>DEA Number: <input type="text" id="deaNumber" required></label>
+<label>DEA Schedule: 
+  <select id="deaSchedule" required>
+    <option value="">Select schedule</option>
+    <option value="I">I</option>
+    <option value="II">II</option>
+    <option value="III">III</option>
+    <option value="IV">IV</option>
+    <option value="V">V</option>
+  </select>
+</label>
   <button type="submit">Send Prescription</button>
-  <p id="loading" style="display:none;">Loading pharmacies...</p>
+
 </form>
 
 <script>
@@ -181,7 +192,9 @@ async function submitPrescription(event) {
     frequency: document.getElementById('frequency').value,
     quantity: parseInt(document.getElementById('quantity').value),
     patient_id: document.getElementById('patientId').value,
-    provider_id: document.getElementById('providerId').value
+    provider_id: document.getElementById('providerId').value,
+    dea_number: document.getElementById('deaNumber').value,      
+    dea_schedule: document.getElementById('deaSchedule').value 
   };
 
   const res = await fetch('/api/prescriptions', {
