@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pharmacy App - Dashboard</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; background: #f0f4f8; }
+
+    .navbar {
+      background: #2c5f8a;
+      color: white;
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .navbar h1 { font-size: 20px; }
+    .navbar span { font-size: 14px; opacity: 0.9; }
+    .logout-btn {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .logout-btn:hover { background: rgba(255,255,255,0.3); }
+
+    .container { max-width: 1000px; margin: 30px auto; padding: 0 20px; }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 25px;
+      margin-bottom: 25px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+    .card h2 {
+      color: #2c5f8a;
+      font-size: 18px;
+      margin-bottom: 5px;
+      border-bottom: 2px solid #e8f0f8;
+      padding-bottom: 10px;
+    }
+    .card .story-label {
+      color: #aaa;
+      font-size: 12px;
+      margin-bottom: 15px;
+    }
+
+    .form-row { display: flex; gap: 15px; margin-bottom: 15px; }
+    .form-group { flex: 1; }
+    label { display: block; font-size: 13px; color: #666; margin-bottom: 5px; font-weight: bold; }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    input:focus, select:focus { outline: none; border-color: #2c5f8a; }
+    textarea { height: 80px; resize: vertical; }
+
+    .btn {
+      padding: 10px 24px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+    }
+    .btn-primary { background: #2c5f8a; color: white; }
+    .btn-primary:hover { background: #1e4a6e; }
+    .btn-green { background: #27ae60; color: white; }
+    .btn-green:hover { background: #1e8449; }
+
+    .result {
+      margin-top: 15px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      font-size: 13px;
+      border-left: 4px solid #2c5f8a;
+      white-space: pre-wrap;
+      display: none;
+    }
+    .result.success { border-left-color: #27ae60; }
+    .result.error { border-left-color: #e74c3c; background: #fdf0f0; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th {
+      background: #f0f4f8;
+      padding: 10px;
+      text-align: left;
+      color: #555;
+      border-bottom: 2px solid #ddd;
+    }
+    td {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+      color: #333;
+    }
+    tr:hover { background: #f9f9f9; }
+    .badge {
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: bold;
+    }
+    .badge-success { background: #d5f5e3; color: #1e8449; }
+    .badge-failed { background: #fde8e8; color: #c0392b; }
+  </style>
+</head>
+<body>
+
+  <div class="navbar">
+    <h1>🏥 PharmacyApp</h1>
+    <span id="welcome-msg">Welcome, Doctor</span>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
+
+  <div class="container">
+
+    <!-- Story 13: Prescription Confirmation -->
+    <div class="card">
+      <h2>📋 Prescription Confirmation</h2>
+      <div class="story-label">Story 13 — Receive confirmation from pharmacy</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Prescription ID</label>
+          <input type="number" id="confirm-rx-id" placeholder="e.g. 1" value="1"/>
+        </div>
+        <div class="form-group">
+          <label>Pharmacy ID</label>
+          <input type="number" id="confirm-pharmacy-id" placeholder="e.g. 1" value="1"/>
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="confirm-status">
+            <option value="received">Received</option>
+            <option value="ready_for_pickup">Ready for Pickup</option>
+            <option value="issue">Issue</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:15px">
+        <label>Message from Pharmacy</label>
+        <input type="text" id="confirm-message" placeholder="e.g. Prescription received successfully" value="Prescription received successfully"/>
+      </div>
+      <button class="btn btn-primary" onclick="sendConfirmation()">Receive Confirmation</button>
+      <div class="result" id="confirm-result"></div>
+    </div>
+
+    <!-- Story 17: Export Prescription -->
+    <div class="card">
+      <h2>📁 Export Prescription File</h2>
+      <div class="story-label">Story 17 — Export prescription for file-based pharmacies</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Prescription ID</label>
+          <input type="number" id="export-rx-id" placeholder="e.g. 1" value="1"/>
+        </div>
+        <div class="form-group">
+          <label>Pharmacy ID</label>
+          <input type="number" id="export-pharmacy-id" placeholder="e.g. 1" value="1"/>
+        </div>
+        <div class="form-group">
+          <label>File Format</label>
+          <select id="file-format">
+            <option value="json">JSON</option>
+            <option value="csv">CSV</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Medication</label>
+          <input type="text" id="medication" placeholder="e.g. Amoxicillin" value="Amoxicillin"/>
+        </div>
+        <div class="form-group">
+          <label>Dosage</label>
+          <input type="text" id="dosage" placeholder="e.g. 500mg" value="500mg"/>
+        </div>
+        <div class="form-group">
+          <label>Instructions</label>
+          <input type="text" id="instructions" placeholder="e.g. Take twice daily" value="Take twice daily"/>
+        </div>
+      </div>
+      <button class="btn btn-green" onclick="exportPrescription()">Export File</button>
+      <div class="result" id="export-result"></div>
+    </div>
+
+    <!-- Story 18: Audit Logs -->
+    <div class="card">
+      <h2>🔍 Audit Logs</h2>
+      <div class="story-label">Story 18 — View all prescription transmission logs</div>
+      <button class="btn btn-primary" onclick="loadLogs()">Load Audit Logs</button>
+      <div style="margin-top:15px; overflow-x:auto;">
+        <table id="logs-table" style="display:none">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Action</th>
+              <th>Status</th>
+              <th>Doctor ID</th>
+              <th>Pharmacy ID</th>
+              <th>Prescription ID</th>
+              <th>Timestamp</th>
+            </tr>
+          </thead>
+          <tbody id="logs-body"></tbody>
+        </table>
+        <div class="result" id="logs-result"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const token = localStorage.getItem('auth_token');
+    const doctorName = localStorage.getItem('doctor_name');
+
+    if (!token) {
+      window.location.href = '/login.html';
+    } else {
+      document.getElementById('welcome-msg').textContent = 'Welcome, ' + doctorName;
+    }
+
+    function logout() {
+      fetch('/auth/logout', {
+        method: 'DELETE',
+        headers: { 'Authorization': token }
+      });
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('doctor_name');
+      window.location.href = '/login.html';
+    }
+
+    // Story 13 
+    async function sendConfirmation() {
+      const res = await fetch('/prescription_confirmations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token
+        },
+        body: JSON.stringify({
+          prescription_id: document.getElementById('confirm-rx-id').value,
+          pharmacy_id:     document.getElementById('confirm-pharmacy-id').value,
+          status:          document.getElementById('confirm-status').value,
+          message:         document.getElementById('confirm-message').value
+        })
+      });
+      const data = await res.json();
+      const el = document.getElementById('confirm-result');
+      el.style.display = 'block';
+      el.className = 'result ' + (res.ok ? 'success' : 'error');
+      el.textContent = JSON.stringify(data, null, 2);
+    }
+
+    // Story 17 
+    async function exportPrescription() {
+      const res = await fetch('/prescription_exports', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token
+        },
+        body: JSON.stringify({
+          prescription_id: document.getElementById('export-rx-id').value,
+          pharmacy_id:     document.getElementById('export-pharmacy-id').value,
+          medication:      document.getElementById('medication').value,
+          dosage:          document.getElementById('dosage').value,
+          instructions:    document.getElementById('instructions').value,
+          file_format:     document.getElementById('file-format').value
+        })
+      });
+      const data = await res.json();
+      const el = document.getElementById('export-result');
+      el.style.display = 'block';
+      el.className = 'result ' + (res.ok ? 'success' : 'error');
+      el.textContent = JSON.stringify(data, null, 2);
+    }
+
+    // Story 18 
+    async function loadLogs() {
+      const res = await fetch('/transmission_logs', {
+        headers: { 'Authorization': token }
+      });
+      const data = await res.json();
+
+      if (res.ok && data.length > 0) {
+        const tbody = document.getElementById('logs-body');
+        tbody.innerHTML = '';
+        data.forEach(log => {
+          const badgeClass = log.status === 'success' ? 'badge-success' : 'badge-failed';
+          tbody.innerHTML += `
+            <tr>
+              <td>${log.id}</td>
+              <td>${log.action}</td>
+              <td><span class="badge ${badgeClass}">${log.status}</span></td>
+              <td>${log.doctor_id || '-'}</td>
+              <td>${log.pharmacy_id || '-'}</td>
+              <td>${log.prescription_id || '-'}</td>
+              <td>${new Date(log.timestamp).toLocaleString()}</td>
+            </tr>
+          `;
+        });
+        document.getElementById('logs-table').style.display = 'table';
+      } else {
+        const el = document.getElementById('logs-result');
+        el.style.display = 'block';
+        el.textContent = 'No logs found.';
+      }
+    }
+  </script>
+</body>
+</html>
+    <!-- Story 6: Add Medication Instructions -->
+    <div class="card">
+      <h2>&#128138; Add Medication Instructions</h2>
+      <div class="story-label">Story 6 — Add dosage instructions to an existing prescription</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Prescription ID</label>
+          <input type="number" id="instr-rx-id" placeholder="e.g. 1" value="1"/>
+        </div>
+        <div class="form-group">
+          <label>Medication</label>
+          <input type="text" id="instr-medication" placeholder="e.g. Amoxicillin"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Dosage</label>
+          <input type="text" id="instr-dosage" placeholder="e.g. 500mg"/>
+        </div>
+        <div class="form-group">
+          <label>Frequency</label>
+          <input type="text" id="instr-frequency" placeholder="e.g. Twice daily"/>
+        </div>
+        <div class="form-group">
+          <label>Duration</label>
+          <input type="text" id="instr-duration" placeholder="e.g. 7 days"/>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:15px">
+        <label>Additional Notes (optional)</label>
+        <textarea id="instr-notes" placeholder="e.g. Take with food"></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="addInstructions()">Save Instructions</button>
+      <div class="result" id="instr-result"></div>
+    </div>
+
+    <!-- Story 16: Print Prescription -->
+    <div class="card">
+      <h2>&#128438; Print Prescription</h2>
+      <div class="story-label">Story 16 — Generate a printable prescription document</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Prescription ID</label>
+          <input type="number" id="print-rx-id" placeholder="e.g. 1" value="1"/>
+        </div>
+      </div>
+      <button class="btn btn-green" onclick="printPrescription()">&#128438; Open Print View</button>
+      <div class="result" id="print-result"></div>
+    </div>
+
+    <!-- Story 19: Prescription History -->
+    <div class="card">
+      <h2>&#128203; Prescription History</h2>
+      <div class="story-label">Story 19 — View all prescriptions you have created</div>
+      <button class="btn btn-primary" onclick="loadHistory()">Load History</button>
+      <div style="margin-top:15px; overflow-x:auto;">
+        <table id="history-table" style="display:none">
+          <thead>
+            <tr>
+              <th>Prescription ID</th>
+              <th>Medication</th>
+              <th>Dosage</th>
+              <th>Frequency</th>
+              <th>Duration</th>
+              <th>Date</th>
+              <th>Print</th>
+            </tr>
+          </thead>
+          <tbody id="history-body"></tbody>
+        </table>
+        <div class="result" id="history-result"></div>
+      </div>
+    </div>
+
+    <script>
+    async function addInstructions() {
+      const rxId = document.getElementById('instr-rx-id').value;
+      const res = await fetch(`/prescriptions/${rxId}/instructions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': token },
+        body: JSON.stringify({
+          medication: document.getElementById('instr-medication').value,
+          dosage:     document.getElementById('instr-dosage').value,
+          frequency:  document.getElementById('instr-frequency').value,
+          duration:   document.getElementById('instr-duration').value,
+          notes:      document.getElementById('instr-notes').value
+        })
+      });
+      const data = await res.json();
+      const el = document.getElementById('instr-result');
+      el.style.display = 'block';
+      el.className = 'result ' + (res.ok ? 'success' : 'error');
+      el.textContent = res.ok ? 'Instructions saved for Prescription #' + rxId : JSON.stringify(data, null, 2);
+    }
+
+    async function printPrescription() {
+      const rxId = document.getElementById('print-rx-id').value;
+      const el = document.getElementById('print-result');
+      const res = await fetch(`/prescriptions/${rxId}/print`, {
+        headers: { 'Authorization': token }
+      });
+      el.style.display = 'block';
+      if (res.ok) {
+        const html = await res.text();
+        const win = window.open('', '_blank');
+        win.document.write(html);
+        win.document.close();
+        el.className = 'result success';
+        el.textContent = 'Print view opened in new tab.';
+      } else {
+        el.className = 'result error';
+        el.textContent = 'No instructions found for Prescription #' + rxId + '. Add instructions first.';
+      }
+    }
+
+    async function loadHistory() {
+      const res = await fetch('/prescriptions/history', {
+        headers: { 'Authorization': token }
+      });
+      const data = await res.json();
+      const el = document.getElementById('history-result');
+      if (res.ok && data.length > 0) {
+        const tbody = document.getElementById('history-body');
+        tbody.innerHTML = '';
+        data.forEach(rx => {
+          tbody.innerHTML += `<tr>
+            <td>${rx.prescription_id}</td>
+            <td>${rx.medication}</td>
+            <td>${rx.dosage}</td>
+            <td>${rx.frequency}</td>
+            <td>${rx.duration}</td>
+            <td>${new Date(rx.created_at).toLocaleDateString()}</td>
+            <td><button onclick="openPrint(${rx.prescription_id})" style="background:#2c5f8a;color:white;border:none;padding:4px 10px;border-radius:5px;cursor:pointer;font-size:12px;">Print</button></td>
+          </tr>`;
+        });
+        document.getElementById('history-table').style.display = 'table';
+        el.style.display = 'none';
+      } else {
+        el.style.display = 'block';
+        el.className = 'result';
+        el.textContent = 'No prescriptions found. Add instructions first.';
+      }
+    }
+
+    async function openPrint(rxId) {
+      const res = await fetch(`/prescriptions/${rxId}/print`, {
+        headers: { 'Authorization': token }
+      });
+      if (res.ok) {
+        const html = await res.text();
+        const win = window.open('', '_blank');
+        win.document.write(html);
+        win.document.close();
+      } else {
+        alert('Could not load print view for prescription #' + rxId);
+      }
+    }
+    </script>
