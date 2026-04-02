@@ -1,7 +1,7 @@
 Rails.application.routes.draw do
   root "auth#login"    # go to login page on start
   get "/login", to: "auth#login"
-  
+
   # story 20
   post   "/auth/login",  to: "auth#login"
   delete "/auth/logout", to: "auth#logout"
@@ -11,6 +11,9 @@ Rails.application.routes.draw do
     post 'prescriptions', to: 'prescriptions#create'
   end
 
+   # Dashboard route
+  get "/dashboard", to: "dashboard#index", as: "dashboard"
+  
   # story 18
   get "/transmission_logs", to: "transmission_logs#index"
 

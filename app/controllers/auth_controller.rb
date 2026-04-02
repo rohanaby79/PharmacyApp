@@ -1,12 +1,27 @@
+# app/controllers/auth_controller.rb
 class AuthController < ApplicationController
   skip_before_action :verify_authenticity_token
 
   def login
     respond_to do |format|
-      format.html { render :login }  # Renders app/views/auth/login.html.erb
-      format.json do                  # Handles API requests
+      format.html do
         doctor = Doctor.find_by(email: params[:email])
+        if doctor&.authenticate(params[:password]) && doctor.active?
+          token = AuthToken.create!(
+            doctor: doctor,
+            token: AuthToken.generate_token,
+            expires_at: 24.hours.from_now
+          )
+          session[:auth_token] = token.token  # <-- store token in session
+          redirect_to dashboard_path           # <-- go to dashboard
+        else
+          flash[:alert] = "Invalid credentials or inactive account"
+          render :login
+        end
+      end
 
+      format.json do
+        doctor = Doctor.find_by(email: params[:email])
         if doctor&.authenticate(params[:password]) && doctor.active?
           token = AuthToken.create!(
             doctor: doctor,
