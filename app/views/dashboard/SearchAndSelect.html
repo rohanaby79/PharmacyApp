@@ -1,0 +1,109 @@
+<h1>Search Pharmacies</h1>
+<input type="text" id="zip" placeholder="Enter ZIP">
+<input type="number" id="radius" placeholder="Radius in km" value="5">
+<button onclick="searchPharmacies()">Search</button>
+
+<ul id="results"></ul>
+
+<h2>Create Electronic Prescription</h2>
+<form id="prescriptionForm" onsubmit="submitPrescription(event)">
+  <label>Medication Name: <input type="text" id="medication" required></label><br>
+  <label>Dosage: <input type="text" id="dosage" required></label><br>
+  <label>Frequency: <input type="text" id="frequency" required></label><br>
+  <label>Quantity: <input type="number" id="quantity" required></label><br>
+  <label>Patient ID: <input type="text" id="patientId" required></label><br>
+  <label>Provider ID: <input type="text" id="providerId" required></label><br>
+  <button type="submit">Send Prescription</button>
+  <p id="loading" style="display:none;">Loading pharmacies...</p>
+</form>
+
+<script>
+let selectedPharmacyId = null;
+
+// Search pharmacies and render them safely
+async function searchPharmacies() {
+  const zip = document.getElementById('zip').value;
+  const radius = document.getElementById('radius').value;
+
+  const ul = document.getElementById('results');
+  const loading = document.getElementById('loading');
+
+  // Show loading
+  loading.style.display = 'block';
+  ul.innerHTML = '';
+
+  try {
+    const res = await fetch(`/api/pharmacies?zip=${zip}&radius=${radius}`);
+    const pharmacies = await res.json();
+
+    pharmacies.forEach(p => {
+      const li = document.createElement('li');
+
+      const radio = document.createElement('input');
+      radio.type = 'radio';
+      radio.name = 'selectedPharmacy';
+      radio.value = p.id;
+      radio.addEventListener('click', () => selectPharmacy(p.id));
+
+      const info = document.createElement('span');
+      info.innerHTML = `
+        <strong>ID:</strong> ${p.id} |
+        <strong>Name:</strong> ${p.name} |
+        <strong>Address:</strong> ${p.address} |
+        <strong>Contact:</strong> ${p.phone || "No phone number"} |
+        <strong>e-Prescriptions:</strong> ${p.supports_e_rx}
+      `;
+
+      li.appendChild(radio);
+      li.appendChild(info);
+      ul.appendChild(li);
+    });
+
+  } catch (error) {
+    console.error(error);
+    ul.innerHTML = '<li>Error loading pharmacies</li>';
+  } finally {
+    // Hide loading
+    loading.style.display = 'none';
+  }
+}
+
+// Set selected pharmacy ID
+function selectPharmacy(id) {
+  selectedPharmacyId = id;
+  console.log("Selected pharmacy:", id);
+}
+
+// Submit prescription to backend
+async function submitPrescription(event) {
+  event.preventDefault();
+
+  if (!selectedPharmacyId) {
+    alert("Please select a pharmacy first.");
+    return;
+  }
+
+  const payload = {
+    pharmacy_id: selectedPharmacyId,
+    medication: document.getElementById('medication').value,
+    dosage: document.getElementById('dosage').value,
+    frequency: document.getElementById('frequency').value,
+    quantity: parseInt(document.getElementById('quantity').value),
+    patient_id: document.getElementById('patientId').value,
+    provider_id: document.getElementById('providerId').value
+  };
+
+  const res = await fetch('/api/prescriptions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+
+  if (res.ok) {
+    alert("Prescription sent successfully!");
+    document.getElementById('prescriptionForm').reset();
+  } else {
+    alert("Failed to send prescription.");
+  }
+}
+</script>

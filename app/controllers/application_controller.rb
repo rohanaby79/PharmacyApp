@@ -1,7 +1,11 @@
+# app/controllers/application_controller.rb
 class ApplicationController < ActionController::Base
-  # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
-  allow_browser versions: :modern
+  private
 
-  # Changes to the importmap will invalidate the etag for HTML responses
-  stale_when_importmap_changes
+  def authenticate_user!
+    token = request.headers["Authorization"] || session[:auth_token]
+    unless AuthToken.exists?(token: token)
+      redirect_to login_path
+    end
+  end
 end

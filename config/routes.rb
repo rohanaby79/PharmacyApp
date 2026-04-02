@@ -1,12 +1,15 @@
 Rails.application.routes.draw do
+  root "auth#login"    # go to login page on start
+  get "/login", to: "auth#login"
+  
+  # story 20
+  post   "/auth/login",  to: "auth#login"
+  delete "/auth/logout", to: "auth#logout"
+
   namespace :api do
     get  'pharmacies',    to: 'pharmacies#index'
     post 'prescriptions', to: 'prescriptions#create'
   end
-
-  # story 20
-  post   "/auth/login",  to: "auth#login"
-  delete "/auth/logout", to: "auth#logout"
 
   # story 18
   get "/transmission_logs", to: "transmission_logs#index"
