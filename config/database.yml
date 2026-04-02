@@ -1,11 +1,20 @@
 default: &default
-  adapter: nulldb
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  host: localhost
+  port: 5432
+  username: <%= `whoami`.strip %>
+  password:
 
 development:
   <<: *default
+  database: pharmacyapp_development
 
 test:
   <<: *default
+  database: pharmacyapp_test
 
 production:
   <<: *default
+  database: pharmacyapp_production
