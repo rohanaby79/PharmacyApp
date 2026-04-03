@@ -5,7 +5,7 @@ module Api
     def create
       availability = PharmacyAvailabilityService.new(params[:pharmacy_id]).check_availability
       unless availability[:supported]
-        return render json: { status: "error", errors: [availability[:message]] }, status: :unprocessable_entity
+        return render json: { status: "error", errors: [ availability[:message] ] }, status: :unprocessable_entity
       end
 
       validator = PrescriptionValidationService.new(prescription_params)
@@ -18,8 +18,9 @@ module Api
         dea_number:   params[:dea_number],
         dea_schedule: params[:dea_schedule]
       )
-      unless dea.authorized?
-        return render json: { status: "error", errors: [dea.verify[:message]], dea_blocked: true }, status: :forbidden
+      dea_result = dea.verify
+      unless dea_result[:authorized]
+        return render json: { status: "error", errors: [ dea_result[:message] ], dea_blocked: true }, status: :forbidden
       end
 
       @prescription = Prescription.new(prescription_params)

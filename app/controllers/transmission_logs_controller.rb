@@ -1,13 +1,13 @@
 class TransmissionLogsController < ApplicationController
     skip_before_action :verify_authenticity_token
-  
+
     # To view the log, verify the token
     before_action :authenticate_doctor!
-  
-    # GET /transmission_logs 
+
+    # GET /transmission_logs
     def index
       logs = TransmissionLog.order(created_at: :desc)
-  
+
       render json: logs.map { |log|
         {
           id:              log.id,
@@ -21,17 +21,6 @@ class TransmissionLogsController < ApplicationController
         }
       }, status: :ok
     end
-  
+
     private
-  
-    # Check if there are valid tokens in the request header
-    def authenticate_doctor!
-      token = request.headers["Authorization"]
-      auth_token = AuthToken.find_by(token: token)
-  
-      # Access is denied if the token does not exist or has expired
-      unless auth_token&.valid_token?
-        render json: { error: "Unauthorized" }, status: :unauthorized
-      end
-    end
-  end
+end

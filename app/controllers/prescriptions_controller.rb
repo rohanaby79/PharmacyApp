@@ -79,18 +79,6 @@ class PrescriptionsController < ApplicationController
 
   private
 
-  def authenticate_doctor!
-    token = request.headers["Authorization"]
-    @auth_token = AuthToken.find_by(token: token)
-    unless @auth_token&.valid_token?
-      render json: { error: "Unauthorized" }, status: :unauthorized
-    end
-  end
-
-  def current_doctor
-    @auth_token.doctor
-  end
-
   def build_print_html(ins, rx_id)
     <<~HTML
       <!DOCTYPE html>

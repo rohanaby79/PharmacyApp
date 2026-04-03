@@ -1,12 +1,12 @@
 class PrescriptionExportsController < ApplicationController
     skip_before_action :verify_authenticity_token
     before_action :authenticate_doctor!
-  
+
     # POST /prescription_exports — Export the prescription file
     def create
       prescription_id = params[:prescription_id]
       file_format     = params[:file_format] || "json"
-  
+
       # Construct prescription data
       prescription_data = {
         prescription_id: prescription_id,
@@ -18,7 +18,7 @@ class PrescriptionExportsController < ApplicationController
         instructions:    params[:instructions],
         exported_at:     Time.current.iso8601
       }
-  
+
       # Generate file content
       file_content = case file_format
       when "json"
@@ -27,12 +27,12 @@ class PrescriptionExportsController < ApplicationController
         prescription_data.keys.join(",") + "\n" +
         prescription_data.values.join(",")
       end
-  
+
       # Save the file to the storage directory
       file_name = "prescription_#{prescription_id}_#{Time.current.to_i}.#{file_format}"
       file_path = Rails.root.join("storage", file_name)
       File.write(file_path, file_content)
-  
+
       # Record to the database (for auditing)
       export = PrescriptionExport.create!(
         prescription_id: prescription_id,
@@ -41,8 +41,8 @@ class PrescriptionExportsController < ApplicationController
         file_format:     file_format,
         exported_at:     Time.current
       )
-  
-      # Story 18 
+
+      # Story 18
       TransmissionLog.log(
         doctor_id:       current_doctor.id,
         pharmacy_id:     params[:pharmacy_id],
@@ -51,7 +51,7 @@ class PrescriptionExportsController < ApplicationController
         status:          "success",
         ip_address:      request.remote_ip
       )
-  
+
       render json: {
         message:     "Prescription exported successfully",
         file_name:   file_name,
@@ -59,22 +59,10 @@ class PrescriptionExportsController < ApplicationController
         file_path:   file_path.to_s,
         export_id:   export.id
       }, status: :created
-  
+
     rescue => e
       render json: { error: e.message }, status: :unprocessable_entity
     end
-  
+
     private
-  
-    def authenticate_doctor!
-      token = request.headers["Authorization"]
-      @auth_token = AuthToken.find_by(token: token)
-      unless @auth_token&.valid_token?
-        render json: { error: "Unauthorized" }, status: :unauthorized
-      end
-    end
-  
-    def current_doctor
-      @auth_token.doctor
-    end
-  end
+end
