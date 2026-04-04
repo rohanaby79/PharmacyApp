@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pharmacy Search & e-Prescription</title>
+<style>
+  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f7fa; margin: 0; padding: 20px; color: #333; }
+  h1, h2 { color: #2a7ae2; }
+  input, button { padding: 10px; margin: 5px 0 15px 0; border-radius: 5px; border: 1px solid #ccc; font-size: 16px; }
+  input:focus { border-color: #2a7ae2; outline: none; box-shadow: 0 0 5px rgba(42,122,226,0.5); }
+  button { background-color: #2a7ae2; color: white; border: none; cursor: pointer; transition: background-color 0.2s; }
+  button:hover { background-color: #1f5bb5; }
+  form { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 3px 8px rgba(0,0,0,0.1); max-width: 500px; margin-top: 20px; }
+  label { display: block; margin-bottom: 10px; }
+  ul { list-style: none; padding: 0; }
+  li { background-color: white; margin-bottom: 10px; padding: 12px 15px; border-radius: 6px; display: flex; align-items: center; gap: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+  span { flex: 1; }
+  #loading { font-style: italic; color: #555; }
+</style>
+</head>
+<body>
+
+<h1>Search Pharmacies</h1>
+<input type="text" id="zip" placeholder="Enter ZIP">
+<input type="number" id="radius" placeholder="Radius in km" value="5">
+<button onclick="searchPharmacies()">Search</button>
+<p id="loading" style="display:none;">Loading pharmacies...</p>
+<ul id="results"></ul>
+
+<h2>Create Electronic Prescription</h2>
+<form id="prescriptionForm" onsubmit="submitPrescription(event)">
+  <label>Medication Name: <input type="text" id="medication" required></label>
+  <label>Dosage: <input type="text" id="dosage" required></label>
+  <label>Frequency: <input type="text" id="frequency" required></label>
+  <label>Quantity: <input type="number" id="quantity" required></label>
+  <label>Patient ID: <input type="text" id="patientId" required></label>
+  <label>Provider ID: <input type="text" id="providerId" required></label>
+  <label>DEA Number: <input type="text" id="deaNumber" required></label>
+  <label>DEA Schedule:
+    <select id="deaSchedule" required>
+      <option value="">Select schedule</option>
+      <option value="I">I</option>
+      <option value="II">II</option>
+      <option value="III">III</option>
+      <option value="IV">IV</option>
+      <option value="V">V</option>
+    </select>
+  </label>
+  <button type="submit">Send Prescription</button>
+</form>
+
+<script>
+let selectedPharmacyId = null;
+
+async function searchPharmacies() {
+  const zip = document.getElementById('zip').value;
+  const radius = document.getElementById('radius').value;
+  const ul = document.getElementById('results');
+  const loading = document.getElementById('loading');
+  loading.style.display = 'block';
+  ul.innerHTML = '';
+  try {
+    const res = await fetch(`/api/pharmacies?zip=${zip}&radius=${radius}`, {
+      credentials: 'same-origin',
+      headers: { 'Accept': 'application/json' }
+    });
+    const pharmacies = await res.json();
+    if (!pharmacies.length) { ul.innerHTML = '<li>No pharmacies found for that ZIP.</li>'; return; }
+    pharmacies.forEach(p => {
+      const li = document.createElement('li');
+      const radio = document.createElement('input');
+      radio.type = 'radio'; radio.name = 'selectedPharmacy'; radio.value = p.identifier || p.id;
+      radio.addEventListener('click', () => { selectedPharmacyId = p.identifier || p.id; });
+      const info = document.createElement('span');
+      info.innerHTML = `<strong>${p.name}</strong> &mdash; ${p.address} &mdash; ${p.phone || 'No phone'} &mdash; e-Rx: <strong style="color:${p.supports_e_rx ? 'green' : 'red'}">${p.supports_e_rx ? 'Yes' : 'No'}</strong>`;
+      li.appendChild(radio); li.appendChild(info); ul.appendChild(li);
+    });
+  } catch (err) {
+    ul.innerHTML = '<li>Error loading pharmacies.</li>';
+  } finally {
+    loading.style.display = 'none';
+  }
+}
+
+async function submitPrescription(event) {
+  event.preventDefault();
+  if (!selectedPharmacyId) { alert('Please select a pharmacy first.'); return; }
+  const payload = {
+    pharmacy_id: selectedPharmacyId,
+    medication: document.getElementById('medication').value,
+    dosage: document.getElementById('dosage').value,
+    frequency: document.getElementById('frequency').value,
+    quantity: parseInt(document.getElementById('quantity').value),
+    patient_id: document.getElementById('patientId').value,
+    provider_id: document.getElementById('providerId').value,
+    dea_number: document.getElementById('deaNumber').value,
+    dea_schedule: document.getElementById('deaSchedule').value
+  };
+  try {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+    const res = await fetch('/api/prescriptions', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-Token': csrfToken },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (res.ok) {
+      alert('Prescription saved as Draft! ID: ' + data.prescription.id);
+      document.getElementById('prescriptionForm').reset();
+      selectedPharmacyId = null;
+    } else {
+      alert('Error: ' + (data.errors || [data.message]).join(', '));
+    }
+  } catch (err) {
+    alert('Network error: ' + err.message);
+  }
+}
+</script>
+</body>
+</html>

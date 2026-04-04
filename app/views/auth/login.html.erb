@@ -72,7 +72,7 @@
       <div class="error"><%= flash[:alert] %></div>
     <% end %>
 
-    <%= form_with url: "/auth/login", method: :post, local: true do |f| %>
+    <%= form_with url: "/auth/login", method: :post, local: true, data: { turbo: false } do |f| %>
       <label>Email</label>
       <%= f.email_field :email, placeholder: "doctor@hospital.com", required: true %>
 

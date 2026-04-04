@@ -58,13 +58,15 @@ class PharmacyOsmService
     .select { |el| el["tags"]["addr:street"].present? || el["tags"]["addr:full"].present? }
     .map do |el|
       {
-        id: el["id"],
-        name: el["tags"]["name"] || "Unknown Pharmacy",
-        lat: el["lat"],
-        lon: el["lon"],
-        address: el["tags"]["addr:street"] || el["tags"]["addr:full"],
-        phone: el["tags"]["phone"] || el["tags"]["contact:phone"] || "No phone number",
-        supports_e_rx: ["Yes", "No"].sample
+        id:            el["id"],
+        identifier:    "OSM-#{el['id']}",
+        name:          el["tags"]["name"] || "Unknown Pharmacy",
+        lat:           el["lat"],
+        lon:           el["lon"],
+        address:       el["tags"]["addr:street"] || el["tags"]["addr:full"],
+        phone:         el["tags"]["phone"] || el["tags"]["contact:phone"] || "No phone number",
+        supports_e_rx: true,
+        pharmacy_type: "retail"
       }
     end
 end
